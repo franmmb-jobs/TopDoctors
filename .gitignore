@@ -1,0 +1,35 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Project specific
+diagnostics.db
+test_integration.db
+*.db
+api.exe
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables (in this case we upload them so that the project can be executed)
+.env
+!configs/config.test.yml
+!envs/.env.test
