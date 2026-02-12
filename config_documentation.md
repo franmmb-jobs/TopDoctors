@@ -18,7 +18,5 @@ These are sensitive values that should be kept secure.
 | :--- | :--- | :--- |
 | `JWT_SECRET` | Secret key used for signing and verifying JWT tokens. **Change this in production!** | `secret` |
 
-## API Versioning
 
-Currently, the API does not use explicit versioning in the URL path (e.g., `/v1/`). However, internal structures are prepared to support this.
-The current version is effectively **v1**.
+

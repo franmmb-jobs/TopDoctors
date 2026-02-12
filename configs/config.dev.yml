@@ -9,5 +9,5 @@ database:
   port: "5432"
 
 api:
-  port: "8010"
+  port: "8050"
   jwt_secret: "your_jwt_secret"

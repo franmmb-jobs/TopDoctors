@@ -3,9 +3,9 @@ package services
 import (
 	"errors"
 	"time"
-	"topdoctors/internal/config"
 	"topdoctors/internal/core/domain"
 	"topdoctors/internal/core/ports"
+	"topdoctors/internal/infrastructure/config"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -39,7 +39,7 @@ func (s *AuthService) Login(username, password string) (string, error) {
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte(s.cfg.JWTSecret))
+	tokenString, err := token.SignedString([]byte(s.cfg.Api.JWTSecret))
 	if err != nil {
 		return "", err
 	}

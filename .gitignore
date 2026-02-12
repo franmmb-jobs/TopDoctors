@@ -31,5 +31,7 @@ api.exe
 
 # Environment variables (in this case we upload them so that the project can be executed)
 .env
+*.yml
 !configs/config.test.yml
+!configs/config.dev.yml
 !envs/.env.test

@@ -37,7 +37,6 @@ const (
 // Initialize the logger
 // ----------------------------------------------------------------
 func init() {
-
 	// Set our custom logger as the global default
 	// We don't need to worry about races in init() because
 	// Go guarantees that it runs in a single thread at startup.

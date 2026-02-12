@@ -7,9 +7,9 @@ import (
 	"os"
 	"topdoctors/internal/adapters/handler"
 	"topdoctors/internal/adapters/repository"
-	"topdoctors/internal/config"
 	"topdoctors/internal/core/services"
-	_ "topdoctors/internal/logger"
+	"topdoctors/internal/infrastructure/config"
+	_ "topdoctors/pkg/logger"
 )
 
 func main() {
@@ -48,8 +48,8 @@ func main() {
 	mux.Handle("POST /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.CreateDiagnosis)))
 
 	// Start Server
-	fmt.Printf("Starting server on port %s...\n", cfg.Port)
-	errStartServer := http.ListenAndServe(":"+cfg.Port, mux)
+	fmt.Printf("Starting server on port %s...\n", cfg.Api.Port)
+	errStartServer := http.ListenAndServe(":"+cfg.Api.Port, mux)
 	if errStartServer != nil {
 		slog.Error("Server stopped unexpectedly", "error", errStartServer)
 		os.Exit(1)

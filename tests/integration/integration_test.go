@@ -25,7 +25,7 @@ func TestAPI_Flow(t *testing.T) {
 		t.Fatalf("Failed to init repo: %v", err)
 	}
 
-	cfg := &config.Config{JWTSecret: "test-secret", Port: "8080"}
+	cfg := &config.Config{Api: config.ApiConfig{JWTSecret: "test-secret", Port: "8080"}}
 
 	authService := services.NewAuthService(repo, cfg)
 	patientService := services.NewPatientService(repo)

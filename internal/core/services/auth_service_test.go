@@ -3,10 +3,10 @@ package services_test
 import (
 	"errors"
 	"testing"
-	"topdoctors/internal/config"
 	"topdoctors/internal/core/domain"
 	"topdoctors/internal/core/ports/mocks"
 	"topdoctors/internal/core/services"
+	"topdoctors/internal/infrastructure/config"
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/mock/gomock"
@@ -18,7 +18,10 @@ func TestAuthService_Login(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := mocks.NewMockUserRepository(ctrl)
-	cfg := &config.Config{JWTSecret: "testsecret"}
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("failed to load config: %v", err)
+	}
 	authService := services.NewAuthService(mockUserRepo, cfg)
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"topdoctors/internal/config"
 	"topdoctors/internal/core/domain"
 	"topdoctors/internal/core/ports"
+	"topdoctors/internal/infrastructure/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -140,7 +140,7 @@ func (h *HttpHandler) AuthMiddleware(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, http.ErrAbortHandler
 			}
-			return []byte(h.cfg.JWTSecret), nil
+			return []byte(h.cfg.Api.JWTSecret), nil
 		})
 
 		if err != nil || !token.Valid {
