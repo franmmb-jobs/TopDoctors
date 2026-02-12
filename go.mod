@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/lmittmann/tint v1.1.3
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.48.0
 	gorm.io/driver/sqlite v1.6.0
@@ -16,7 +17,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/lmittmann/tint v1.1.3 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

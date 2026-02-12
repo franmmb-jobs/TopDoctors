@@ -9,6 +9,7 @@ import (
 	"topdoctors/internal/adapters/repository"
 	"topdoctors/internal/config"
 	"topdoctors/internal/core/services"
+	_ "topdoctors/internal/logger"
 )
 
 func main() {
