@@ -1,0 +1,296 @@
+basePath: /
+definitions:
+  http.CreateDiagnosisRequest:
+    properties:
+      date:
+        description: ISO 8601 format
+        example: "2026-02-13T10:00:00Z"
+        type: string
+      diagnosis:
+        example: Gripe común
+        type: string
+      patient_id:
+        example: 01HMGNBPJNX0G2BZXJ7XW1RHPR
+        type: string
+      prescription:
+        example: Ibuprofeno 600mg cada 8h
+        type: string
+    type: object
+  http.CreatePatientRequest:
+    properties:
+      address:
+        example: Calle Mayor 1, Madrid
+        type: string
+      dni:
+        example: 12345678X
+        type: string
+      email:
+        example: maria@example.com
+        type: string
+      name:
+        example: Maria Garcia
+        type: string
+      phone:
+        example: "+34600123456"
+        type: string
+    type: object
+  http.DiagnosisResponse:
+    properties:
+      created_at:
+        example: "2026-02-13T18:23:00Z"
+        type: string
+      date:
+        example: "2026-02-13T18:23:00Z"
+        type: string
+      diagnosis:
+        example: Fiebre alta y tos persistente
+        type: string
+      id:
+        example: 01HMGNBPJNX0G2BZXJ7XW1RHPR
+        type: string
+      patient:
+        $ref: '#/definitions/http.PatientResponse'
+      patient_id:
+        example: 01HMGNBPJNX0G2BZXJ7XW1RHPR
+        type: string
+      prescription:
+        example: Paracetamol 1g cada 8 horas
+        type: string
+    type: object
+  http.LoginRequest:
+    properties:
+      password:
+        example: secret123
+        type: string
+      username:
+        example: doctor_admin
+        type: string
+    type: object
+  http.LoginResponse:
+    properties:
+      token:
+        example: string
+        type: string
+    type: object
+  http.PatientResponse:
+    properties:
+      address:
+        example: Calle Mayor 1, Madrid
+        type: string
+      created_at:
+        example: "2026-02-13T18:23:00Z"
+        type: string
+      dni:
+        example: 12345678X
+        type: string
+      email:
+        example: maria@example.com
+        type: string
+      id:
+        example: 01HMGNBPJNX0G2BZXJ7XW1RHPR
+        type: string
+      name:
+        example: Maria Garcia
+        type: string
+      phone:
+        example: "+34600123456"
+        type: string
+      updated_at:
+        example: "2026-02-13T18:23:00Z"
+        type: string
+    type: object
+  http.RegisterRequest:
+    properties:
+      password:
+        example: secure_password
+        type: string
+      username:
+        example: new_doctor
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for managing clinic patients and medical diagnostics.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: TopDoctors API
+  version: "1.0"
+paths:
+  /diagnostics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of diagnostics filtering by patient name and/or
+        date range
+      parameters:
+      - description: Filter by patient name
+        in: query
+        name: patient_name
+        type: string
+      - description: Filter by start date (YYYY-MM-DD)
+        in: query
+        name: date_start
+        type: string
+      - description: Filter by end date (YYYY-MM-DD)
+        in: query
+        name: date_end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.DiagnosisResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Search diagnostics
+      tags:
+      - Diagnostics
+    post:
+      consumes:
+      - application/json
+      description: Add a new diagnosis to a patient
+      parameters:
+      - description: Diagnosis Info
+        in: body
+        name: diagnosis
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateDiagnosisRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create diagnosis
+      tags:
+      - Diagnostics
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.LoginResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            type: string
+      summary: User login
+      tags:
+      - Auth
+  /patients:
+    post:
+      consumes:
+      - application/json
+      description: Record a new patient in the system
+      parameters:
+      - description: Patient Info
+        in: body
+        name: patient
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreatePatientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.PatientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create patient
+      tags:
+      - Patients
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user in the system
+      parameters:
+      - description: Registration Info
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Register user
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and then your personal token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
-	"topdoctors/internal/helpers"
 
 	"github.com/spf13/viper"
 )
@@ -22,6 +22,7 @@ type LogsConfig struct {
 
 type DatabaseConfig struct {
 	Type     string `mapstructure:"type"`
+	DSN      string `mapstructure:"dsn"`
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 	Host     string `mapstructure:"host"`
@@ -44,7 +45,7 @@ func LoadConfig() (*Config, error) {
 
 	if Flags.InTestEnv {
 		// If test env and no explicit path, use test config
-		basePath := helpers.GetProjectRoot()
+		basePath := getProjectRoot()
 		cfgPath = filepath.Join(basePath, defaultTestConfigPath)
 		slog.Info("Using test config", "path", cfgPath)
 	} else {
@@ -89,4 +90,25 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+// GetProjectRoot devuelve la ruta absoluta de la raíz del proyecto
+func getProjectRoot() string {
+	// 1. Intentamos obtener la ruta del archivo actual que se está ejecutando
+	_, b, _, _ := runtime.Caller(0)
+	basePath := filepath.Dir(b)
+
+	// 2. Subimos por el árbol de directorios buscando go.mod
+	for {
+		if _, err := os.Stat(filepath.Join(basePath, "go.mod")); err == nil {
+			return basePath
+		}
+
+		parent := filepath.Dir(basePath)
+		if parent == basePath {
+			// Hemos llegado a la raíz del sistema de archivos sin encontrar go.mod
+			return ""
+		}
+		basePath = parent
+	}
 }

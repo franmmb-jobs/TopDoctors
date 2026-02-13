@@ -1,57 +1,73 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
-	"topdoctors/internal/adapters/handler"
-	"topdoctors/internal/adapters/repository"
-	"topdoctors/internal/core/services"
+	"topdoctors/internal/application"
 	"topdoctors/internal/infrastructure/config"
+	httpinfra "topdoctors/internal/infrastructure/http"
+	"topdoctors/internal/infrastructure/persistence"
+	"topdoctors/internal/infrastructure/shared"
 	_ "topdoctors/pkg/logger"
 )
+
+// @title TopDoctors API
+// @version 1.0
+// @description API for managing clinic patients and medical diagnostics.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and then your personal token.
 
 func main() {
 	// Load Config
 	cfg, errLoadCfg := config.LoadConfig()
 	if errLoadCfg != nil {
 		slog.Error("Failed to load configuration", "error", errLoadCfg)
-		//It consider it a failure
 		os.Exit(1)
 	}
 
 	// Initialize Repository (Infrastructure)
-	repo, err := repository.NewGormRepository()
+	repo, err := persistence.NewGormRepository(
+		persistence.Config{
+			DSN: cfg.Database.DSN,
+		},
+	)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 
-	// Initialize Services (Application)
-	authService := services.NewAuthService(repo, cfg)
-	patientService := services.NewPatientService(repo)
-	diagnosisService := services.NewDiagnosisService(repo, repo)
+	// Initialize Support (Infrastructure)
+	support := shared.NewSupport()
+
+	// Initialize Application Services (Application)
+	app := application.NewApplication(
+		repo,
+		repo,
+		support,
+		cfg,
+	)
 
 	// Initialize Handler (Adapter)
-	h := handler.NewHttpHandler(authService, patientService, diagnosisService, cfg)
+	h := httpinfra.NewHttpHandler(app, cfg)
 
-	// Router setup
-	mux := http.NewServeMux()
-
-	// Public Routes
-	mux.HandleFunc("POST /login", h.Login)
-	mux.HandleFunc("POST /register", h.Register)      // Optional
-	mux.HandleFunc("POST /patients", h.CreatePatient) // Helper for verification
-
-	// Protected Routes
-	mux.Handle("GET /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.GetDiagnostics)))
-	mux.Handle("POST /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.CreateDiagnosis)))
-
-	// Start Server
-	fmt.Printf("Starting server on port %s...\n", cfg.Api.Port)
-	errStartServer := http.ListenAndServe(":"+cfg.Api.Port, mux)
-	if errStartServer != nil {
-		slog.Error("Server stopped unexpectedly", "error", errStartServer)
+	// Initialize and Start Server (Infrastructure)
+	server := httpinfra.NewServer(cfg, h)
+	if err := server.Start(); err != nil {
+		slog.Error("Server stopped unexpectedly", "error", err)
 		os.Exit(1)
 	}
 }

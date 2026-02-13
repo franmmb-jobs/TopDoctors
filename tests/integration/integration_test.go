@@ -3,14 +3,16 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"topdoctors/internal/adapters/handler"
-	"topdoctors/internal/adapters/repository"
-	"topdoctors/internal/config"
-	"topdoctors/internal/core/services"
+	"topdoctors/internal/application"
+	"topdoctors/internal/infrastructure/config"
+	httpinfra "topdoctors/internal/infrastructure/http"
+	"topdoctors/internal/infrastructure/persistence"
+	"topdoctors/internal/infrastructure/shared"
 )
 
 func TestAPI_Flow(t *testing.T) {
@@ -20,27 +22,28 @@ func TestAPI_Flow(t *testing.T) {
 	defer os.Remove(dbFile)
 
 	// Initialize Dependencies
-	repo, err := repository.NewGormRepositoryWithDSN(dbFile)
+	repo, err := persistence.NewGormRepository(
+		persistence.Config{DSN: dbFile},
+	)
 	if err != nil {
 		t.Fatalf("Failed to init repo: %v", err)
 	}
 
 	cfg := &config.Config{Api: config.ApiConfig{JWTSecret: "test-secret", Port: "8080"}}
 
-	authService := services.NewAuthService(repo, cfg)
-	patientService := services.NewPatientService(repo)
-	diagnosisService := services.NewDiagnosisService(repo, repo)
+	support := shared.NewSupport()
+	// Initialize Application Services
+	app := application.NewApplication(repo, repo, support, cfg)
 
-	h := handler.NewHttpHandler(authService, patientService, diagnosisService, cfg)
+	h := httpinfra.NewHttpHandler(app, cfg)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST /register", h.Register)
-	mux.HandleFunc("POST /login", h.Login)
-	mux.HandleFunc("POST /patients", h.CreatePatient)
-	mux.Handle("POST /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.CreateDiagnosis)))
-	mux.Handle("GET /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.GetDiagnostics)))
+	// Initialize Server and get Handler
+	serverAPI := httpinfra.NewServer(cfg, h)
 
-	server := httptest.NewServer(mux)
+	router := serverAPI.GetHandler()
+
+	server := httptest.NewServer(router)
+
 	defer server.Close()
 
 	client := server.Client()
@@ -76,19 +79,26 @@ func TestAPI_Flow(t *testing.T) {
 	patientPayload := `{"name": "Jane Doe", "dni": "98765432B", "email": "hane@example.com"}`
 	resp, err = client.Post(server.URL+"/patients", "application/json", bytes.NewBufferString(patientPayload))
 	if err != nil || resp.StatusCode != http.StatusCreated {
-		t.Errorf("Failed to create patient: %v, status: %d", err, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		t.Errorf("Failed to create patient: %v, status: %d, body: %s", err, resp.StatusCode, string(body))
 	}
-	// We assume ID 1
+	var patientResp httpinfra.PatientResponse
+	json.NewDecoder(resp.Body).Decode(&patientResp)
+	patientID := patientResp.ID
+	if patientID == "" {
+		t.Fatal("Patient ID is empty")
+	}
 
 	// 4. Create Diagnosis
-	diagnosisPayload := `{"patient_id": 1, "diagnosis": "Fever", "date": "2023-11-01T10:00:00Z"}`
+	diagnosisPayload := `{"patient_id": "` + patientID + `", "diagnosis": "Fever", "date": "2023-11-01T10:00:00Z"}`
 	req, _ := http.NewRequest("POST", server.URL+"/diagnostics", bytes.NewBufferString(diagnosisPayload))
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err = client.Do(req)
 	if err != nil || resp.StatusCode != http.StatusCreated {
-		t.Errorf("Failed to create diagnosis: %v, status: %d", err, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		t.Errorf("Failed to create diagnosis: %v, status: %d, body: %s", err, resp.StatusCode, string(body))
 	}
 
 	// 5. Get Diagnostics

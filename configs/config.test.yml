@@ -3,6 +3,7 @@ logs:
 
 database:
   type: "postgres"
+  DSN: "diagnostics"
   user: "your_db_user"
   password: "your_db_password"
   host: "localhost"

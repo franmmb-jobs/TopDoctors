@@ -1,0 +1,438 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for managing clinic patients and medical diagnostics.",
+        "title": "TopDoctors API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/diagnostics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a list of diagnostics filtering by patient name and/or date range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diagnostics"
+                ],
+                "summary": "Search diagnostics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by patient name",
+                        "name": "patient_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by start date (YYYY-MM-DD)",
+                        "name": "date_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by end date (YYYY-MM-DD)",
+                        "name": "date_end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/http.DiagnosisResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new diagnosis to a patient",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diagnostics"
+                ],
+                "summary": "Create diagnosis",
+                "parameters": [
+                    {
+                        "description": "Diagnosis Info",
+                        "name": "diagnosis",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateDiagnosisRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Authenticate a user and return a JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login Credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.LoginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients": {
+            "post": {
+                "description": "Record a new patient in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Create patient",
+                "parameters": [
+                    {
+                        "description": "Patient Info",
+                        "name": "patient",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreatePatientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/http.PatientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register a new user in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "description": "Registration Info",
+                        "name": "register",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "http.CreateDiagnosisRequest": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "description": "ISO 8601 format",
+                    "type": "string",
+                    "example": "2026-02-13T10:00:00Z"
+                },
+                "diagnosis": {
+                    "type": "string",
+                    "example": "Gripe común"
+                },
+                "patient_id": {
+                    "type": "string",
+                    "example": "01HMGNBPJNX0G2BZXJ7XW1RHPR"
+                },
+                "prescription": {
+                    "type": "string",
+                    "example": "Ibuprofeno 600mg cada 8h"
+                }
+            }
+        },
+        "http.CreatePatientRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Calle Mayor 1, Madrid"
+                },
+                "dni": {
+                    "type": "string",
+                    "example": "12345678X"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Maria Garcia"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+34600123456"
+                }
+            }
+        },
+        "http.DiagnosisResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-13T18:23:00Z"
+                },
+                "date": {
+                    "type": "string",
+                    "example": "2026-02-13T18:23:00Z"
+                },
+                "diagnosis": {
+                    "type": "string",
+                    "example": "Fiebre alta y tos persistente"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "01HMGNBPJNX0G2BZXJ7XW1RHPR"
+                },
+                "patient": {
+                    "$ref": "#/definitions/http.PatientResponse"
+                },
+                "patient_id": {
+                    "type": "string",
+                    "example": "01HMGNBPJNX0G2BZXJ7XW1RHPR"
+                },
+                "prescription": {
+                    "type": "string",
+                    "example": "Paracetamol 1g cada 8 horas"
+                }
+            }
+        },
+        "http.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "secret123"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "doctor_admin"
+                }
+            }
+        },
+        "http.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "string"
+                }
+            }
+        },
+        "http.PatientResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Calle Mayor 1, Madrid"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-02-13T18:23:00Z"
+                },
+                "dni": {
+                    "type": "string",
+                    "example": "12345678X"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "maria@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "01HMGNBPJNX0G2BZXJ7XW1RHPR"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Maria Garcia"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "+34600123456"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2026-02-13T18:23:00Z"
+                }
+            }
+        },
+        "http.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "secure_password"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "new_doctor"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and then your personal token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
