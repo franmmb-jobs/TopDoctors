@@ -129,8 +129,19 @@ func applyLogger() {
 	// Set the new logger as the global default
 	slog.SetDefault(slog.New(handler))
 
-	// Log the configuration
-	slog.Info("Logger configured", "colors", loggerCfg.colors, "level", loggerCfg.level)
+	// Log the configuration (always, creating personalized logs)
+	var startupHandler slog.Handler
+	if loggerCfg.colors {
+		startupHandler = tint.NewHandler(loggerCfg.output, &tint.Options{
+			Level:      slog.LevelInfo, // Forzamos INFO para este mensaje
+			TimeFormat: time.Kitchen,
+		})
+	} else {
+		startupHandler = slog.NewJSONHandler(loggerCfg.output, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})
+	}
+	slog.New(startupHandler).Info("Logger configured", "colors", loggerCfg.colors, "level", loggerCfg.level)
 }
 
 // ----------------------------------------------------------------
