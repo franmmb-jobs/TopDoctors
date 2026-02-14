@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -11,27 +12,27 @@ import (
 )
 
 type Config struct {
-	Logs     LogsConfig     `mapstructure:"logs"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Api      ApiConfig      `mapstructure:"api"`
+	Logs     LogsConfig     `mapstructure:"logs" validate:"required"`
+	Database DatabaseConfig `mapstructure:"database" validate:"required"`
+	Api      ApiConfig      `mapstructure:"api" validate:"required"`
 }
 
 type LogsConfig struct {
-	Level string `mapstructure:"level"`
+	Level string `mapstructure:"level" validate:"required"`
 }
 
 type DatabaseConfig struct {
-	Type     string `mapstructure:"type"`
-	DSN      string `mapstructure:"dsn"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"port"`
+	DSN string `mapstructure:"dsn" validate:"required,isdb"`
+	// Type     string `mapstructure:"type" validate:"required"`
+	// User     string `mapstructure:"user" validate:"required"`
+	// Password string `mapstructure:"password" validate:"required"`
+	// Host     string `mapstructure:"host" validate:"required"`
+	// Port     string `mapstructure:"port" validate:"required"`
 }
 
 type ApiConfig struct {
-	Port      string `mapstructure:"port"`
-	JWTSecret string `mapstructure:"jwt_secret"`
+	Port      string `mapstructure:"port" validate:"required,gt=0,lte=65535"`
+	JWTSecret string `mapstructure:"jwt_secret" validate:"required,min=10,max=100"`
 }
 
 const defaultTestConfigPath = "configs/config.test.yml"
@@ -87,6 +88,12 @@ func LoadConfig() (*Config, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	// 3. Validar que los datos estén y sean correctos
+	if err := ValidateConfig(&cfg); err != nil {
+		slog.Error("error validating config")
+		return nil, fmt.Errorf("error validating config: %w", err)
 	}
 
 	return &cfg, nil
