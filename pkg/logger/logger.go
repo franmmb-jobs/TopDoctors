@@ -47,8 +47,6 @@ func init() {
 	}
 	// Apply initial configuration
 	applyLogger()
-
-	slog.Info("Logger configured", "colors", loggerCfg.colors, "level", loggerCfg.level)
 }
 
 // ----------------------------------------------------------------
@@ -130,6 +128,9 @@ func applyLogger() {
 
 	// Set the new logger as the global default
 	slog.SetDefault(slog.New(handler))
+
+	// Log the configuration
+	slog.Info("Logger configured", "colors", loggerCfg.colors, "level", loggerCfg.level)
 }
 
 // ----------------------------------------------------------------

@@ -22,7 +22,7 @@ definitions:
         example: Calle Mayor 1, Madrid
         type: string
       dni:
-        example: 12345678X
+        example: 12345678Z
         type: string
       email:
         example: maria@example.com
@@ -36,9 +36,6 @@ definitions:
     type: object
   http.DiagnosisResponse:
     properties:
-      created_at:
-        example: "2026-02-13T18:23:00Z"
-        type: string
       date:
         example: "2026-02-13T18:23:00Z"
         type: string
@@ -60,10 +57,10 @@ definitions:
   http.LoginRequest:
     properties:
       password:
-        example: secret123
+        example: secure_password
         type: string
       username:
-        example: doctor_admin
+        example: doctor
         type: string
     type: object
   http.LoginResponse:
@@ -76,9 +73,6 @@ definitions:
     properties:
       address:
         example: Calle Mayor 1, Madrid
-        type: string
-      created_at:
-        example: "2026-02-13T18:23:00Z"
         type: string
       dni:
         example: 12345678X
@@ -95,9 +89,6 @@ definitions:
       phone:
         example: "+34600123456"
         type: string
-      updated_at:
-        example: "2026-02-13T18:23:00Z"
-        type: string
     type: object
   http.RegisterRequest:
     properties:
@@ -105,7 +96,7 @@ definitions:
         example: secure_password
         type: string
       username:
-        example: new_doctor
+        example: doctor
         type: string
     type: object
 info:
@@ -254,6 +245,8 @@ paths:
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: Create patient
       tags:
       - Patients

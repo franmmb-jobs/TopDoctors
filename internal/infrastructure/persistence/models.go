@@ -7,15 +7,15 @@ import (
 
 // GORM models with tags (infrastructure concern)
 type PatientDB struct {
-	ID        uint      `gorm:"primaryKey,autoIncrement"`
-	ULID      string    `gorm:"column:ulid;unique"`
-	Name      string    `json:"name"`
-	DNI       string    `gorm:"unique"`
-	Email     string    `json:"email"`
-	Phone     string    `json:"phone"`
-	Address   string    `json:"address"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint   `gorm:"primaryKey,autoIncrement"`
+	ULID      string `gorm:"column:ulid;unique"`
+	Name      string
+	DNI       string `gorm:"unique"`
+	Email     string
+	Phone     string
+	Address   string
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
 func (PatientDB) TableName() string {
@@ -23,16 +23,16 @@ func (PatientDB) TableName() string {
 }
 
 type DiagnosisDB struct {
-	ID           uint      `gorm:"primaryKey,autoIncrement"`
-	ULID         string    `gorm:"column:ulid;unique"`
-	PatientULID  string    `gorm:"column:patient_ulid"`
-	PatientID    uint      `json:"patient_id"`
+	ID           uint   `gorm:"primaryKey,autoIncrement"`
+	ULID         string `gorm:"column:ulid;unique"`
+	PatientULID  string `gorm:"column:patient_ulid"`
+	PatientID    uint
 	Patient      PatientDB `gorm:"foreignKey:PatientID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Diagnosis    string    `json:"diagnosis"`
-	Prescription string    `json:"prescription"`
-	Date         time.Time `json:"date"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	Diagnosis    string
+	Prescription string
+	Date         time.Time
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
 }
 
 func (DiagnosisDB) TableName() string {
@@ -55,8 +55,8 @@ type UserTokenDB struct {
 	UserID    uint      `gorm:"column:user_id"`
 	User      UserDB    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Token     string    `gorm:"unique"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
 func (UserTokenDB) TableName() string {
@@ -97,14 +97,20 @@ func toDiagnosisDB(d *domain.Diagnosis) *DiagnosisDB {
 }
 
 func toDiagnosisDomain(d *DiagnosisDB) *domain.Diagnosis {
-	return &domain.Diagnosis{
+	diagnosis := &domain.Diagnosis{
 		ID:           d.ULID,
 		PatientID:    d.PatientULID,
-		Patient:      *toPatientDomain(&d.Patient),
 		Diagnosis:    d.Diagnosis,
 		Prescription: d.Prescription,
 		Date:         d.Date,
 	}
+
+	// Only map patient if it was preloaded
+	if d.Patient.ULID != "" {
+		diagnosis.Patient = *toPatientDomain(&d.Patient)
+	}
+
+	return diagnosis
 }
 
 func toUserDB(u *domain.User) *UserDB {

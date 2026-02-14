@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"log/slog"
 	"time"
 	"topdoctors/internal/domain"
 
@@ -20,16 +21,28 @@ type Config struct {
 func NewGormRepository(cfg Config) (*GormRepository, error) {
 	db, err := gorm.Open(sqlite.Open(cfg.DSN), &gorm.Config{})
 	if err != nil {
+		slog.Error("Failed to open GORM database", "dsn", cfg.DSN, "error", err)
 		return nil, err
 	}
 
 	// Auto migrate
 	err = db.AutoMigrate(&PatientDB{}, &DiagnosisDB{}, &UserDB{}, &UserTokenDB{})
 	if err != nil {
+		slog.Error("Database auto-migration failed", "error", err)
 		return nil, err
 	}
 
+	slog.Debug("GORM repository initialized and migrated")
 	return &GormRepository{db: db, cfg: cfg}, nil
+}
+
+// Close closes the underlying database connection
+func (r *GormRepository) Close() error {
+	sqlDB, err := r.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
 }
 
 // Patient Repository Implementation
@@ -64,11 +77,22 @@ func (r *GormRepository) GetPatientByDNI(dni string) (*domain.Patient, error) {
 // Diagnosis Repository Implementation
 func (r *GormRepository) CreateDiagnosis(diagnosis *domain.Diagnosis) error {
 	dbDiagnosis := toDiagnosisDB(diagnosis)
-	err := r.db.Create(dbDiagnosis).Error
-	if err == nil {
+
+	// Search patient by ULID to get the primary key (ID)
+	var patient PatientDB
+	errGetPatientID := r.db.Where("ulid = ?", diagnosis.PatientID).Select("id", "ulid").First(&patient).Error
+	if errGetPatientID != nil {
+		slog.Warn("Patient not found during diagnosis creation", "patient_ulid", diagnosis.PatientID)
+		return errGetPatientID
+	}
+
+	dbDiagnosis.PatientID = patient.ID
+	dbDiagnosis.PatientULID = patient.ULID
+	errCreateDiagnosis := r.db.Create(dbDiagnosis).Error
+	if errCreateDiagnosis == nil {
 		diagnosis.ID = dbDiagnosis.ULID
 	}
-	return err
+	return errCreateDiagnosis
 }
 
 func (r *GormRepository) GetDiagnosisByPatientID(patientID string) ([]domain.Diagnosis, error) {
@@ -116,20 +140,23 @@ func (r *GormRepository) GetDiagnosisByPatientName(name string) ([]domain.Diagno
 func (r *GormRepository) SearchDiagnosis(patientName *string, dateStart, dateEnd *time.Time) ([]domain.Diagnosis, error) {
 	query := r.db.Model(&DiagnosisDB{}).Preload("Patient").Joins("Patient")
 
-	if patientName != nil {
+	if patientName != nil && *patientName != "" {
 		query = query.Where("Patient.name LIKE ?", "%"+*patientName+"%")
 	}
 
 	if dateStart != nil {
 		startOfDay := time.Date(dateStart.Year(), dateStart.Month(), dateStart.Day(), 0, 0, 0, 0, dateStart.Location())
-		endOfDay := startOfDay.Add(24 * time.Hour)
-		query = query.Where("diagnoses.date >= ? AND diagnoses.date < ?", startOfDay, endOfDay)
-	}
-
-	if dateEnd != nil && dateEnd != dateStart {
-		startOfDay := time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 0, 0, 0, 0, dateEnd.Location())
-		endOfDay := startOfDay.Add(24 * time.Hour)
-		query = query.Where("diagnoses.date <= ? AND diagnoses.date < ?", startOfDay, endOfDay)
+		if dateEnd == nil {
+			endOfDay := startOfDay.Add(24 * time.Hour)
+			query = query.Where("diagnoses.date >= ? AND diagnoses.date < ?", startOfDay, endOfDay)
+		} else {
+			endOfDay := time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 999, dateEnd.Location())
+			query = query.Where("diagnoses.date >= ? AND diagnoses.date <= ?", startOfDay, endOfDay)
+		}
+	} else if dateEnd != nil {
+		// If only dateEnd is provided, we filter up to that date
+		endOfDay := time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 999, dateEnd.Location())
+		query = query.Where("diagnoses.date <= ?", endOfDay)
 	}
 
 	var diagnostics []DiagnosisDB

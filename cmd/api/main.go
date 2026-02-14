@@ -8,7 +8,7 @@ import (
 	httpinfra "topdoctors/internal/infrastructure/http"
 	"topdoctors/internal/infrastructure/persistence"
 	"topdoctors/internal/infrastructure/shared"
-	_ "topdoctors/pkg/logger"
+	"topdoctors/pkg/logger"
 )
 
 // @title TopDoctors API
@@ -38,6 +38,12 @@ func main() {
 		slog.Error("Failed to load configuration", "error", errLoadCfg)
 		os.Exit(1)
 	}
+	slog.Info("Configuration loaded successfully")
+
+	// Configure Logger
+	logger.SetConfig(logger.Config{
+		Level: &cfg.Logs.Level,
+	})
 
 	// Initialize Repository (Infrastructure)
 	repo, err := persistence.NewGormRepository(
@@ -49,6 +55,7 @@ func main() {
 		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("Connected to database successfully")
 
 	// Initialize Support (Infrastructure)
 	support := shared.NewSupport()
@@ -60,6 +67,7 @@ func main() {
 		support,
 		cfg,
 	)
+	slog.Info("Application services initialized")
 
 	// Initialize Handler (Adapter)
 	h := httpinfra.NewHttpHandler(app, cfg)

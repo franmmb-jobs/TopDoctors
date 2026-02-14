@@ -183,6 +183,11 @@
         },
         "/patients": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Record a new patient in the system",
                 "consumes": [
                     "application/json"
@@ -306,7 +311,7 @@
                 },
                 "dni": {
                     "type": "string",
-                    "example": "12345678X"
+                    "example": "12345678Z"
                 },
                 "email": {
                     "type": "string",
@@ -325,10 +330,6 @@
         "http.DiagnosisResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
-                },
                 "date": {
                     "type": "string",
                     "example": "2026-02-13T18:23:00Z"
@@ -359,11 +360,11 @@
             "properties": {
                 "password": {
                     "type": "string",
-                    "example": "secret123"
+                    "example": "secure_password"
                 },
                 "username": {
                     "type": "string",
-                    "example": "doctor_admin"
+                    "example": "doctor"
                 }
             }
         },
@@ -382,10 +383,6 @@
                 "address": {
                     "type": "string",
                     "example": "Calle Mayor 1, Madrid"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
                 },
                 "dni": {
                     "type": "string",
@@ -406,10 +403,6 @@
                 "phone": {
                     "type": "string",
                     "example": "+34600123456"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
                 }
             }
         },
@@ -422,7 +415,7 @@
                 },
                 "username": {
                     "type": "string",
-                    "example": "new_doctor"
+                    "example": "doctor"
                 }
             }
         }

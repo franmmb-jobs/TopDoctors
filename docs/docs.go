@@ -190,6 +190,11 @@ const docTemplate = `{
         },
         "/patients": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Record a new patient in the system",
                 "consumes": [
                     "application/json"
@@ -313,7 +318,7 @@ const docTemplate = `{
                 },
                 "dni": {
                     "type": "string",
-                    "example": "12345678X"
+                    "example": "12345678Z"
                 },
                 "email": {
                     "type": "string",
@@ -332,10 +337,6 @@ const docTemplate = `{
         "http.DiagnosisResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
-                },
                 "date": {
                     "type": "string",
                     "example": "2026-02-13T18:23:00Z"
@@ -366,11 +367,11 @@ const docTemplate = `{
             "properties": {
                 "password": {
                     "type": "string",
-                    "example": "secret123"
+                    "example": "secure_password"
                 },
                 "username": {
                     "type": "string",
-                    "example": "doctor_admin"
+                    "example": "doctor"
                 }
             }
         },
@@ -389,10 +390,6 @@ const docTemplate = `{
                 "address": {
                     "type": "string",
                     "example": "Calle Mayor 1, Madrid"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
                 },
                 "dni": {
                     "type": "string",
@@ -413,10 +410,6 @@ const docTemplate = `{
                 "phone": {
                     "type": "string",
                     "example": "+34600123456"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2026-02-13T18:23:00Z"
                 }
             }
         },
@@ -429,7 +422,7 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string",
-                    "example": "new_doctor"
+                    "example": "doctor"
                 }
             }
         }

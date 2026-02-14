@@ -2,6 +2,9 @@ package domain
 
 import (
 	"errors"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -14,6 +17,8 @@ var (
 	ErrEmptyDiagnosisText = errors.New("diagnosis text cannot be empty")
 	ErrEmptyPatientFK     = errors.New("patient ID is required for diagnosis")
 	ErrEmptyDate          = errors.New("diagnosis date is required")
+	ErrInvalidEmail       = errors.New("invalid email format")
+	ErrInvalidDNI         = errors.New("invalid DNI format")
 )
 
 // Patient represents a patient in the system
@@ -35,11 +40,21 @@ func (p *Patient) Validate() error {
 	if p.Name == "" {
 		return ErrEmptyName
 	}
+
+	//Validate DNI format
 	if p.DNI == "" {
 		return ErrEmptyDNI
 	}
+	_, err := ValidarDNI(p.DNI)
+	if err != nil {
+		return err
+	}
+
 	if p.Email == "" {
 		return ErrEmptyEmail
+	}
+	if !ValidarEmail(p.Email) {
+		return ErrInvalidEmail
 	}
 	if p.Diagnosis != nil {
 		for _, d := range p.Diagnosis {
@@ -73,4 +88,40 @@ func (d *Diagnosis) Validate() error {
 		return ErrEmptyDate
 	}
 	return nil
+}
+
+// ValidarDNI verifica si un DNI español es matemáticamente consistente.
+func ValidarDNI(dni string) (bool, error) {
+	dni = strings.ToUpper(strings.TrimSpace(dni))
+
+	// 1. Validar formato básico con Regex (8 números + 1 letra)
+	re := regexp.MustCompile(`^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$`)
+	if !re.MatchString(dni) {
+		return false, ErrInvalidDNI
+	}
+
+	// 2. Separar número y letra
+	numeroParte := dni[:8]
+	letraProporcionada := string(dni[8])
+
+	// 3. Calcular la letra que debería tener
+	numero, _ := strconv.Atoi(numeroParte)
+	letras := "TRWAGMYFPDXBNJZSQVHLCKE"
+	letraCorrecta := string(letras[numero%23])
+
+	// 4. Comparar
+	if letraProporcionada != letraCorrecta {
+		return false, ErrInvalidDNI
+	}
+
+	return true, nil
+}
+
+// ValidarEmail verifica si un email tiene un formato válido.
+func ValidarEmail(email string) bool {
+	// Regex simple para validar formato de email
+	// No es perfecto (RFC 5322), pero es suficiente para la mayoría de los casos de uso.
+	const emailRegex = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	match, _ := regexp.MatchString(emailRegex, email)
+	return match
 }

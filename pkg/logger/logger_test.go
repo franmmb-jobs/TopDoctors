@@ -59,6 +59,7 @@ func testSetFormat(t *testing.T) {
 	}
 
 	// Log something
+	buf.Reset()
 	checkCorrectLogContent(t, &buf, slog.Info, "test message", "key", "value", "INFO")
 }
 
@@ -101,13 +102,22 @@ func testCleanSourcePath(t *testing.T) {
 
 	color := false
 	level := "INFO"
-	SetConfig(Config{Colors: &color, Level: &level})
 
+	SetConfig(Config{Colors: &color, Level: &level})
+	buf.Reset()
 	slog.Info("test source")
 
 	var logEntry map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
+	decoder := json.NewDecoder(&buf)
+	if err := decoder.Decode(&logEntry); err != nil {
 		t.Fatalf("Failed to parse log output: %v", err)
+	}
+
+	// If it captured the configuration log instead of the "test source" log
+	if logEntry["msg"] == "Logger configured" {
+		if err := decoder.Decode(&logEntry); err != nil {
+			t.Fatalf("Failed to parse second log output: %v", err)
+		}
 	}
 
 	source, ok := logEntry["source"].(map[string]any)
@@ -144,12 +154,17 @@ func testInvalidLevel(t *testing.T) {
 
 	//Check error message
 	var logEntry map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
-		t.Fatalf("Failed to parse log output: %v", err)
-	}
-
-	if logEntry["msg"] != ErrInvalidLevel {
-		t.Errorf("Expected message '%s', got '%s'", ErrInvalidLevel, logEntry["msg"])
+	decoder := json.NewDecoder(&buf)
+	for {
+		if err := decoder.Decode(&logEntry); err != nil {
+			t.Fatalf("Failed to parse log output: %v", err)
+		}
+		if logEntry["msg"] == ErrInvalidLevel {
+			break
+		}
+		if decoder.Buffered() == nil {
+			t.Fatalf("Expected message '%s' not found in logs", ErrInvalidLevel)
+		}
 	}
 
 	// Verify fallback to INFO (default fallback in code)
@@ -173,7 +188,7 @@ func checkCorrectLogContent(t *testing.T,
 	buf *bytes.Buffer, logFun func(msg string, args ...any),
 	msg string, key string, keyValue string, level string,
 ) {
-
+	buf.Reset()
 	logFun(msg, key, keyValue)
 
 	// Parse JSON output

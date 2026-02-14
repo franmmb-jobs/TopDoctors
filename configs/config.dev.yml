@@ -1,12 +1,13 @@
 logs:
-  # level: "info"
+  level: "debug"
 
 database:
-  type: "postgres"
-  user: "your_db_user"
-  password: "your_db_password"
-  host: "localhost"
-  port: "5432"
+  DSN: "diagnostics.db"
+  # type: "postgres"
+  # user: "your_db_user"
+  # password: "your_db_password"
+  # host: "localhost"
+  # port: "5432"
 
 api:
   port: "8050"

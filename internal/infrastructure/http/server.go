@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	_ "topdoctors/docs"
@@ -26,7 +25,6 @@ func (s *Server) Start() error {
 	mux := s.setupRouter()
 
 	slog.Info("Starting server", "port", s.cfg.Api.Port)
-	fmt.Printf("Starting server on port %s...\n", s.cfg.Api.Port)
 
 	return http.ListenAndServe(":"+s.cfg.Api.Port, mux)
 }
@@ -36,17 +34,18 @@ func (s *Server) GetHandler() http.Handler {
 }
 
 func (s *Server) setupRouter() *http.ServeMux {
+	slog.Debug("Setting up router")
 	mux := http.NewServeMux()
 	h := s.handler
 
 	// Public Routes
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("POST /register", h.Register)
-	mux.HandleFunc("POST /patients", h.CreatePatient)
 
 	// Protected Routes
 	mux.Handle("GET /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.GetDiagnostics)))
 	mux.Handle("POST /diagnostics", h.AuthMiddleware(http.HandlerFunc(h.CreateDiagnosis)))
+	mux.Handle("POST /patients", h.AuthMiddleware(http.HandlerFunc(h.CreatePatient)))
 
 	// Swagger UI
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
